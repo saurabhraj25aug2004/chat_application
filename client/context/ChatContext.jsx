@@ -22,7 +22,7 @@ export const ChatProvider = ({ children }) => {
             setUnseenMessages(data.unseenMessages)
            }
         } catch (error) {
-            toast.error(error.messages)
+            toast.error(error.message)
         }
     }
 

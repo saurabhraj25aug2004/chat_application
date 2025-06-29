@@ -25,13 +25,13 @@ export const AuthProvider =({children})=>{
     //check if the user is authenticated and if so,set the user data and connect the socket
     const checkAuth =async()=>{
         try {
-            const {data} = await axios.get("/api/auth/check")
+            const {data} = await axios.get("/api/auth/check") 
             if(data.success){
                 setAuthUser(data.user)
                 connectSocket(data.user)
             }
         } catch (error) {
-            toast.error(error.Message)
+            toast.error(error.message)
         }
     }
 
@@ -78,7 +78,7 @@ const logout =async ()=>{
 const updateProfile =async(body)=>{
 
     try {
-        const {data} =await axios.put("/api/auth/update-profile",body);
+        const {data} =await axios.put("/api/auth/update",body);
         if(data.success){
             setAuthUser(data.user);
             toast.success("profile updated successfully")
