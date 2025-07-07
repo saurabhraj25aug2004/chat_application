@@ -6,6 +6,8 @@ import { connectDB } from './lib/db.js';
 import userRouter from './Routes/userRoutes.js';
 import messageRouter from './Routes/messageRoutes.js';
 import { Server } from 'socket.io';
+import chatRoutes from './Routes/chatRoutes.js';
+
 const app = express();
 const server =http.createServer(app)
 
@@ -42,6 +44,7 @@ app.use("/api/status",(req,res)=>{
 
 app.use("/api/auth",userRouter)
 app.use("/api/messages",messageRouter)
+app.use('/api/chat', chatRoutes);
 
 
 //Connect with DB

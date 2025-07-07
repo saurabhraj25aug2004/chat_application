@@ -1,17 +1,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { AuthContext } from "./AuthContext";
 import toast from "react-hot-toast";
-
+//
 export const ChatContext = createContext();
+export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [unseenMessages, setUnseenMessages] = useState({});
+//
+  const [chats, setChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+    const {socket,axios,authUser} =useContext(AuthContext);
 
-    const {socket,axios} =useContext(AuthContext);
 
+    const fetchChats = async () => {
+    try {
+      const { data } = await axios.get('/api/chat');
+      setChats(data);
+    } catch (err) {
+      toast.error('Failed to load chats');
+    }
+  };
     //function to get all users for sidebar
 
     const getUsers =async()=>{
@@ -22,29 +34,41 @@ export const ChatProvider = ({ children }) => {
             setUnseenMessages(data.unseenMessages)
            }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.messages)
         }
     }
 
     //function to get messages for selected user
 
-    const getMessages =async (userId)=>{
-        try {
-         const {data}  =  await axios.get(`/api/messages/${userId}`);
-        if(data.success){
-            setMessages(data.messages)
-        }
-        } catch (error) {
-            toast.error(error.message)
-        }
+   const getMessages = async (id) => {
+  try {
+    // id can be either chatId (for group) or userId (for 1-to-1)
+    const { data } = await axios.get(`/api/messages/${id}`);
+    if (data.success) {
+      setMessages(data.messages);
+    } else {
+      toast.error(data.message || "Failed to load messages");
     }
+  } catch (error) {
+    toast.error("Error fetching messages");
+  }
+};
+
     //function to send message to selected user
 
-    const sendMessage =async(messageData)=>{
-        try {
-           const {data}= await axios.post(`/api/messages/send/${selectedUser._id}`,messageData);
+    
+        const sendMessage = async (messageData) => {
+    try {
+            const recipientId = selectedUser?._id || selectedChat?._id;
+             if (!recipientId) {
+                toast.error("No recipient selected");
+                return;
+             }
+
+            const { data } = await axios.post(`/api/messages/send/${recipientId}`, messageData);
+
            if(data.success){
-            setMessages((prevMessages)=>[...prevMessages,data.newMessage])
+            setMessages((prevMessages) => [...prevMessages, data.newMessage]);
            }
            else{
             toast.error(data.message);
@@ -85,10 +109,42 @@ useEffect(()=>{
     return ()=> unsubscribeFromMessages();
 },[socket,selectedUser])
 
+useEffect(() => {
+  if (!socket) return;
+
+  //  When someone creates a new group, add it to the chat list
+  socket.on("groupCreated", (newGroupChat) => {
+    setChats((prev) => [newGroupChat, ...prev]);
+  });
+
+  //  When someone deletes a group, remove it from chat list
+  socket.on("groupDeleted", (deletedChatId) => {
+    setChats((prev) => prev.filter(chat => chat._id !== deletedChatId));
+
+    // If currently viewing the deleted chat, close it
+    if (selectedChat?._id === deletedChatId) {
+      setSelectedChat(null);
+    }
+  });
+
+  //  Clean up to avoid multiple listeners
+  return () => {
+    socket.off("groupCreated");
+    socket.off("groupDeleted");
+  };
+}, [socket, selectedChat]);
+
+
+
+useEffect(() => {
+  if (authUser) {
+    fetchChats();
+  }
+}, [authUser]);
 
   const value = {
     messages,users,selectedUser,getUsers,getMessages,sendMessage,setSelectedUser,
-    unseenMessages,setUnseenMessages
+    unseenMessages,setUnseenMessages,chats, setChats, selectedChat, setSelectedChat
   };
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };

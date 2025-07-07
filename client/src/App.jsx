@@ -11,17 +11,16 @@ const App = () => {
 
 
   return (
-    <div className="bg-[url('/bgImage.svg')] bg-contain">
-      <Toaster />
-      <Routes>
-        <Route path='/' element={authUser?  <HomePage /> : <Navigate to="/login" />} />
-        <Route path='/login' element={!authUser?  <LoginPage /> : <Navigate to="/" />} />
-        <Route path='/profile' element={authUser?  <ProfilePage /> : <Navigate to="/login" />} />
+  <div className="bg-cover bg-no-repeat bg-center min-h-screen" style={{ backgroundImage: "url('/chat-bg-dark.svg')" }}>
+    <Toaster />
+    <Routes>
+      <Route path='/' element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+      <Route path='/login' element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+      <Route path='/profile' element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+    </Routes>
+  </div>
+);
 
-       
-      </Routes>
-    </div>
-  )
 }
 
 export default App
